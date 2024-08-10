@@ -1,0 +1,91 @@
+name: Update README with Contributors
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Runs daily at midnight (UTC)
+  workflow_dispatch:
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout the repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        pip install requests
+
+    - name: Fetch contributors and update README
+      env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      run: |
+        import requests
+        import os
+        import re
+        from pathlib import Path
+
+        # GitHub repository details
+        repo_owner = 'alg-x'
+        repo_name = 'Battery-Capacity-Prediction-Using-Regression'
+        api_url = f'https://api.github.com/repos/{repo_owner}/{repo_name}/contributors'
+
+        headers = {'Authorization': f'token {os.getenv("GH_TOKEN")}'}
+
+        # Fetch contributors
+        response = requests.get(api_url, headers=headers)
+        contributors = response.json()
+
+        # Generate contributor section
+        contributors_section = '<!-- readme: contributors -start -->\n'
+        for contributor in contributors:
+            username = contributor['login']
+            avatar_url = contributor['avatar_url']
+            profile_url = f'https://github.com/{username}'
+            contributors_section += f'![{username}]({avatar_url}?s=50) [{username}]({profile_url})\n'
+
+        contributors_section += '<!-- readme: contributors -end -->\n'
+
+        # Read the README file
+        readme_path = Path('README.md')
+        with readme_path.open('r') as file:
+            readme_content = file.read()
+
+        # Check if the contributors section exists and update it
+        if '<!-- readme: contributors -start -->' in readme_content:
+            # Replace the existing section
+            readme_content = re.sub(
+                r'<!-- readme: contributors -start -->.*?<!-- readme: contributors -end -->',
+                contributors_section,
+                readme_content,
+                flags=re.DOTALL
+            )
+        else:
+            # Insert the section after Introduction
+            introduction_section = '## 1. Introduction\n'
+            insert_position = readme_content.find(introduction_section) + len(introduction_section)
+            readme_content = (
+                readme_content[:insert_position] +
+                '\n' + contributors_section +
+                readme_content[insert_position:]
+            )
+
+        # Update README
+        with readme_path.open('w') as file:
+            file.write(readme_content)
+
+        print("README.md has been updated with contributor information.")
+
+    - name: Commit and push changes
+      run: |
+        git config --global user.name 'github-actions'
+        git config --global user.email 'actions@github.com'
+        git add README.md
+        git commit -m 'Update README with contributors'
+        git push

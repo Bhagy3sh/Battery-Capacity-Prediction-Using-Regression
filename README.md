@@ -1,5 +1,5 @@
 # Battery-Capacity-Prediction-Using-Regression
-<!-- readme: Bhagy3sh,BRRAIN7,aryansahare,AnveshaSingh contributors -start -->
+<!-- readme: contributors -start -->
 <!-- readme: contributors -end -->
 
 ## 1. Introduction

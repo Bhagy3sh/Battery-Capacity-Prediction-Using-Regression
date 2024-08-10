@@ -40,6 +40,8 @@ jobs:
 
         # Fetch contributors
         response = requests.get(api_url, headers=headers)
+        if response.status_code != 200:
+            raise Exception(f"Failed to fetch contributors: {response.status_code} {response.text}")
         contributors = response.json()
 
         # Generate contributor section

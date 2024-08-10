@@ -31,17 +31,23 @@ jobs:
         import re
         from pathlib import Path
 
-        # GitHub repository details
-        repo_owner = 'alg-x'
-        repo_name = 'Battery-Capacity-Prediction-Using-Regression'
+        # GitHub repository details from environment variables
+        repo_details = os.getenv('GITHUB_REPOSITORY').split('/')
+        repo_owner = repo_details[0]
+        repo_name = repo_details[1]
         api_url = f'https://api.github.com/repos/{repo_owner}/{repo_name}/contributors'
+
+        print(f"Fetching contributors from {api_url}...")
 
         headers = {'Authorization': f'token {os.getenv("GH_TOKEN")}'}
 
         # Fetch contributors
         response = requests.get(api_url, headers=headers)
         if response.status_code != 200:
-            raise Exception(f"Failed to fetch contributors: {response.status_code} {response.text}")
+            print(f"Failed to fetch contributors: {response.status_code}")
+            print(response.text)
+            raise Exception(f"Failed to fetch contributors: {response.status_code}")
+
         contributors = response.json()
 
         # Generate contributor section
@@ -56,6 +62,10 @@ jobs:
 
         # Read the README file
         readme_path = Path('README.md')
+        if not readme_path.exists():
+            print("README.md not found.")
+            raise FileNotFoundError("README.md not found.")
+
         with readme_path.open('r') as file:
             readme_content = file.read()
 
@@ -72,6 +82,9 @@ jobs:
             # Insert the section after Introduction
             introduction_section = '## 1. Introduction\n'
             insert_position = readme_content.find(introduction_section) + len(introduction_section)
+            if insert_position == -1:
+                print("Introduction section not found.")
+                raise ValueError("Introduction section not found.")
             readme_content = (
                 readme_content[:insert_position] +
                 '\n' + contributors_section +

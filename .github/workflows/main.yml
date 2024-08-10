@@ -31,22 +31,18 @@ jobs:
         import re
         from pathlib import Path
 
-        # GitHub repository details from environment variables
+        # Get repository details
         repo_details = os.getenv('GITHUB_REPOSITORY').split('/')
         repo_owner = repo_details[0]
         repo_name = repo_details[1]
         api_url = f'https://api.github.com/repos/{repo_owner}/{repo_name}/contributors'
-
-        print(f"Fetching contributors from {api_url}...")
 
         headers = {'Authorization': f'token {os.getenv("GH_TOKEN")}'}
 
         # Fetch contributors
         response = requests.get(api_url, headers=headers)
         if response.status_code != 200:
-            print(f"Failed to fetch contributors: {response.status_code}")
-            print(response.text)
-            raise Exception(f"Failed to fetch contributors: {response.status_code}")
+            raise Exception(f"Failed to fetch contributors: {response.status_code} - {response.text}")
 
         contributors = response.json()
 
@@ -60,18 +56,15 @@ jobs:
 
         contributors_section += '<!-- readme: contributors -end -->\n'
 
-        # Read the README file
+        # Read and update the README file
         readme_path = Path('README.md')
         if not readme_path.exists():
-            print("README.md not found.")
             raise FileNotFoundError("README.md not found.")
 
         with readme_path.open('r') as file:
             readme_content = file.read()
 
-        # Check if the contributors section exists and update it
         if '<!-- readme: contributors -start -->' in readme_content:
-            # Replace the existing section
             readme_content = re.sub(
                 r'<!-- readme: contributors -start -->.*?<!-- readme: contributors -end -->',
                 contributors_section,
@@ -79,11 +72,9 @@ jobs:
                 flags=re.DOTALL
             )
         else:
-            # Insert the section after Introduction
             introduction_section = '## 1. Introduction\n'
             insert_position = readme_content.find(introduction_section) + len(introduction_section)
             if insert_position == -1:
-                print("Introduction section not found.")
                 raise ValueError("Introduction section not found.")
             readme_content = (
                 readme_content[:insert_position] +
@@ -91,11 +82,8 @@ jobs:
                 readme_content[insert_position:]
             )
 
-        # Update README
         with readme_path.open('w') as file:
             file.write(readme_content)
-
-        print("README.md has been updated with contributor information.")
 
     - name: Commit and push changes
       run: |

@@ -32,7 +32,7 @@ jobs:
         from pathlib import Path
 
         # Get repository details
-        repo_details = os.getenv('GITHUB_REPOSITORY').split('/')
+        repo_details = os.getenv('Battery-Capacity-Prediction-Using-Regression').split('/')
         repo_owner = repo_details[0]
         repo_name = repo_details[1]
         api_url = f'https://api.github.com/repos/{repo_owner}/{repo_name}/contributors'
